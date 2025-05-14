@@ -1,0 +1,14 @@
+/* Custom styles yang tidak tersedia di Bootstrap */
+.card {
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* Pastikan gambar cover selalu proporsional */
+.album-cover {
+  aspect-ratio: 1/1;
+  object-fit: cover;
+}
