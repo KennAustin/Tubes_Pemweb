@@ -1,0 +1,3 @@
+[run]
+source = music_review_backend
+omit = music_review_backend/test*
