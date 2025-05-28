@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // ⬅️ Tambahkan Link
 
 function Navbar() {
   const { user, logout } = useAppContext();
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     if (!user) setShowPopup(false);
@@ -22,19 +21,19 @@ function Navbar() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 stick position-relative ">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 stick position-relative">
       <span className="navbar-brand fw-bold">Music Review</span>
       <div className="collapse navbar-collapse">
         <ul className="navbar-nav ms-auto align-items-center">
           <li className="nav-item">
-            <a className="nav-link" href="/search">
+            <Link className="nav-link" to="/search">
               Cari Lagu
-            </a>
+            </Link>
           </li>
           <li className="nav-item">
-            <a className="nav-link" href="/reviews">
+            <Link className="nav-link" to="/reviews">
               Ulasan
-            </a>
+            </Link>
           </li>
           <li className="nav-item ms-3 position-relative">
             <img

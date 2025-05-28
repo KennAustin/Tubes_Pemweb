@@ -5,52 +5,142 @@ import ReviewForm from '../components/ReviewForm';
 function Reviews() {
   const { reviews, savedSongs, deleteReview, setReviews } = useAppContext();
   const [editingReviewId, setEditingReviewId] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Cari review yang user edit
-  const editingReview = reviews.find(r => r.id === editingReviewId);
+  const handleUpdateReview = async (updatedReview) => {
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`http://localhost:6543/api/reviews/${updatedReview.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          rating: updatedReview.rating,
+          comment: updatedReview.comment
+        }),
+      });
 
-  // Fungsi update review di context setelah edit
-  const handleUpdateReview = (updatedReview) => {
-    setReviews(prev => prev.map(r => r.id === updatedReview.id ? updatedReview : r));
-    setEditingReviewId(null);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || 'Gagal update review');
+
+      if (data.status === 'success') {
+        setReviews(prev => prev.map(r =>
+          r.id === updatedReview.id ? { ...r, ...data.review } : r
+        ));
+        setEditingReviewId(null);
+        alert('Review berhasil diperbarui!');
+      }
+    } catch (err) {
+      console.error('Error update review:', err);
+      alert(`Gagal update review: ${err.message}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const getSongInfo = (review) => {
+    const song = savedSongs.find(s => s.id === review.song_id);
+    return {
+      name: song?.name || review.song_name,
+      artist: song?.artist_name || review.artist_name,
+      image: song?.album_image || review.album_image_url || 'https://via.placeholder.com/100'
+    };
   };
 
   return (
-    <div className="container">
-      <h2 className="mt-4 mb-3">Ulasan Lagu</h2>
+    <div className="py-5" style={{
+      backgroundImage: 'url("background_search.jpg")',
+      backgroundSize: 'cover',
+      minHeight: '100vh'
+    }}>
+      <div className="container bg-white bg-opacity-75 rounded shadow p-4">
+        <h2 className="mb-4 fw-bold">Ulasan Lagu</h2>
 
-      {reviews.length === 0 && <p>Belum ada ulasan.</p>}
+        {reviews.length === 0 && <p className="text-muted">Belum ada ulasan.</p>}
 
-      {reviews.map(review => {
-        const song = savedSongs.find(s => s.id === review.songId);
+        {reviews.map(review => {
+          const { name, artist, image } = getSongInfo(review);
+          const isEditing = editingReviewId === review.id;
 
-        if (editingReviewId === review.id) {
-          // Tampilkan form edit
+          if (isEditing) {
+            return (
+              <div key={review.id} className="bg-light rounded shadow-sm mb-4 p-4">
+                <div className="row mb-3 align-items-center">
+                  <div className="col-md-2 text-center">
+                    <img
+                      src={image}
+                      alt={name}
+                      className="img-fluid rounded"
+                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                      onError={(e) => e.target.src = 'https://via.placeholder.com/100'}
+                    />
+                  </div>
+                  <div className="col-md-10">
+                    <h4>{name} - {artist}</h4>
+                  </div>
+                </div>
+
+                <ReviewForm
+                  initialData={review}
+                  onCancel={() => setEditingReviewId(null)}
+                  onSave={handleUpdateReview}
+                  isSubmitting={isUpdating}
+                />
+              </div>
+            );
+          }
+
           return (
-            <ReviewForm
-              key={review.id}
-              initialData={review}
-              onCancel={() => setEditingReviewId(null)}
-              onSave={handleUpdateReview}
-            />
+            <div key={review.id} className="row align-items-center bg-light rounded shadow-sm mb-4 p-3">
+              <div className="col-md-2 text-center">
+                <img
+                  src={image}
+                  alt={name}
+                  className="img-fluid rounded"
+                  style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                  onError={(e) => e.target.src = 'https://via.placeholder.com/100'}
+                />
+              </div>
+              <div className="col-md-8">
+                <h5>{name} - {artist}</h5>
+                <div className="d-flex align-items-center mb-1">
+                  <span className="me-2">Rating:</span>
+                  {[...Array(5)].map((_, i) => (
+                    <span 
+                      key={i}
+                      style={{ 
+                        color: i < review.rating ? '#ffc107' : '#e4e5e9',
+                        fontSize: '1.2rem'
+                      }}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+                <p className="mb-0">{review.comment}</p>
+              </div>
+              <div className="col-md-2 text-end">
+                <div className="d-flex justify-content-end gap-2">
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => {
+                      if (window.confirm('Hapus review ini?')) {
+                        deleteReview(review.id);
+                      }
+                    }}
+                    disabled={isUpdating}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
           );
-        }
-
-        return (
-          <div key={review.id} className="mb-3 p-3 border rounded">
-            <h5>{song ? `${song.name} - ${song.artist}` : review.songName}</h5>
-            <p><strong>Rating:</strong> {review.rating} / 5</p>
-            <p><strong>Komentar:</strong> {review.comment}</p>
-
-            <button className="btn btn-sm btn-warning me-2" onClick={() => setEditingReviewId(review.id)}>
-              Edit
-            </button>
-            <button className="btn btn-sm btn-danger" onClick={() => deleteReview(review.id)}>
-              Hapus
-            </button>
-          </div>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }
