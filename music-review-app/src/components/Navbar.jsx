@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { useNavigate, Link } from 'react-router-dom'; // ⬅️ Tambahkan Link
+import { useNavigate, Link } from 'react-router-dom';
 
 function Navbar() {
   const { user, logout } = useAppContext();
