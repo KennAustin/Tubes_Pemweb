@@ -52,7 +52,7 @@ npm run dev
 
 ## Referensi
 - Pyramid Documentation
-= React Documentation
+- React Documentation
 - SQLAlchemy
 - PostgreSQL
 - Vite
