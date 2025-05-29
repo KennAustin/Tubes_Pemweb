@@ -40,7 +40,22 @@ def login(request):
     else:
         return Response(json_body={'status': 'error', 'message': 'Invalid credentials'}, status=401)
 
+
+@view_config(route_name='delete_user', renderer='json', request_method='DELETE')
+def delete_user(request):
+    user_id = request.matchdict.get('id')
+    user = DBSession.query(User).get(user_id)
+
+    if not user:
+        return Response(json_body={'status': 'error', 'message': 'User not found'}, status=404)
+
+    with transaction.manager:
+        DBSession.delete(user)
+
+    return {'status': 'success', 'message': f'User {user_id} deleted'}
+
 def includeme(config):
     config.add_route('register', '/api/register')
     config.add_route('login', '/api/login')
+    config.add_route('delete_user', '/api/users/{id}')
     config.scan(__name__)

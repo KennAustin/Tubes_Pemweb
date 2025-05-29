@@ -11,7 +11,6 @@ setup(
         'sqlalchemy',
         'psycopg2-binary',
         'zope.sqlalchemy',
-        'passlib',
         'waitress'
 
     ],
