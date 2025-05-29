@@ -50,7 +50,7 @@ npm run dev
 - Tampilan antarmuka responsif menggunakan React Bootstrap
 - Routing frontend antar halaman menggunakan React Router
 
-##Referensi
+## Referensi
 - Pyramid Documentation
 = React Documentation
 - SQLAlchemy
