@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-function SongCard({ song, isEditing = false, existingReview = null, onCancelEdit = () => {} }) {
+function SongCard({ song }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -11,18 +11,6 @@ function SongCard({ song, isEditing = false, existingReview = null, onCancelEdit
 
   const navigate = useNavigate();
   const { user, setReviews } = useAppContext();
-
-  // Inisialisasi nilai untuk mode edit
-  useEffect(() => {
-    if (isEditing && existingReview) {
-      setRating(existingReview.rating);
-      setComment(existingReview.comment);
-    } else {
-      setRating(0);
-      setComment('');
-      setSubmitted(false);
-    }
-  }, [isEditing, existingReview]);
 
   const handleRatingClick = (star) => {
     setRating(star);
@@ -38,52 +26,25 @@ function SongCard({ song, isEditing = false, existingReview = null, onCancelEdit
     const userId = user?.user_id || user?.id;
 
     try {
-      let response;
-      
-      if (isEditing && existingReview) {
-        // Mode edit - PUT request
-        response = await axios.put(`http://localhost:6543/api/reviews/${existingReview.id}`, {
-          rating,
-          comment
-        });
-      } else {
-        // Mode baru - POST request
-        response = await axios.post('http://localhost:6543/api/reviews', {
-          song_id: song.id,
-          song_name: song.name,
-          artist_name: song.artist_name,
-          album_image_url: song.album_image,
-          rating,
-          comment,
-          user_id: userId
-        });
-      }
+      const response = await axios.post('http://localhost:6543/api/reviews', {
+        song_id: song.id,
+        song_name: song.name,
+        artist_name: song.artist_name,
+        album_image_url: song.album_image,
+        rating,
+        comment,
+        user_id: userId
+      });
 
       if (response.data.status === 'success') {
-        setReviews(prev => {
-          if (isEditing) {
-            // Update review yang ada
-            return prev.map(review => 
-              review.id === existingReview.id ? response.data.review : review
-            );
-          } else {
-            // Tambahkan review baru
-            return [...prev, response.data.review];
-          }
-        });
-        
+        setReviews(prev => [...prev, response.data.review]);
         setSubmitted(true);
-        alert(`Ulasan berhasil ${isEditing ? 'diperbarui' : 'dikirim'}!`);
-        
-        if (isEditing) {
-          onCancelEdit(); // Keluar dari mode edit
-        } else {
-          navigate('/reviews');
-        }
+        alert('Ulasan berhasil dikirim!');
+        navigate('/reviews');
       }
     } catch (err) {
       console.error("Gagal mengirim ulasan:", err.response?.data || err.message);
-      alert(`Gagal ${isEditing ? 'memperbarui' : 'mengirim'} ulasan: ${err.response?.data?.message || err.message}`);
+      alert(`Gagal mengirim ulasan: ${err.response?.data?.message || err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -127,32 +88,18 @@ function SongCard({ song, isEditing = false, existingReview = null, onCancelEdit
           onChange={(e) => setComment(e.target.value)}
         />
 
-        {/* Action Buttons */}
-        <div className="d-flex gap-2">
-          {isEditing && (
-            <button
-              className="btn btn-sm btn-outline-secondary flex-grow-1"
-              onClick={onCancelEdit}
-              disabled={isSubmitting}
-            >
-              Batal
-            </button>
-          )}
-          
-          <button
-            className={`btn btn-sm flex-grow-1 ${isEditing ? 'btn-warning' : 'btn-primary'}`}
-            onClick={handleSubmitReview}
-            disabled={isSubmitting || submitted || rating === 0 || comment.trim() === ''}
-          >
-            {isSubmitting 
-              ? "Memproses..." 
-              : isEditing 
-                ? "Perbarui Ulasan" 
-                : submitted 
-                  ? "Terkirim" 
-                  : "Submit Ulasan"}
-          </button>
-        </div>
+        {/* Tombol Submit */}
+        <button
+          className="btn btn-sm btn-primary flex-grow-1"
+          onClick={handleSubmitReview}
+          disabled={isSubmitting || submitted || rating === 0 || comment.trim() === ''}
+        >
+          {isSubmitting 
+            ? "Memproses..." 
+            : submitted 
+              ? "Terkirim" 
+              : "Submit Ulasan"}
+        </button>
 
         {/* Spotify */}
         <a
