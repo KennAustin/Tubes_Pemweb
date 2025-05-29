@@ -1,44 +1,7 @@
-import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 
 function Reviews() {
-  const { reviews, savedSongs, deleteReview, setReviews } = useAppContext();
-  const [editingReviewId, setEditingReviewId] = useState(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const handleUpdateReview = async (updatedReview) => {
-    setIsUpdating(true);
-    try {
-      const res = await fetch(`http://localhost:6543/api/reviews/${updatedReview.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          rating: updatedReview.rating,
-          comment: updatedReview.comment
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || 'Gagal update review');
-
-      if (data.status === 'success') {
-        setReviews(prev => prev.map(r =>
-          r.id === updatedReview.id ? { ...r, ...data.review } : r
-        ));
-        setEditingReviewId(null);
-        alert('Review berhasil diperbarui!');
-      }
-    } catch (err) {
-      console.error('Error update review:', err);
-      alert(`Gagal update review: ${err.message}`);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  const { reviews, savedSongs, deleteReview } = useAppContext();
 
   const getSongInfo = (review) => {
     const song = savedSongs.find(s => s.id === review.song_id);
@@ -62,35 +25,6 @@ function Reviews() {
 
         {reviews.map(review => {
           const { name, artist, image } = getSongInfo(review);
-          const isEditing = editingReviewId === review.id;
-
-          if (isEditing) {
-            return (
-              <div key={review.id} className="bg-light rounded shadow-sm mb-4 p-4">
-                <div className="row mb-3 align-items-center">
-                  <div className="col-md-2 text-center">
-                    <img
-                      src={image}
-                      alt={name}
-                      className="img-fluid rounded"
-                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                      onError={(e) => e.target.src = 'https://via.placeholder.com/100'}
-                    />
-                  </div>
-                  <div className="col-md-10">
-                    <h4>{name} - {artist}</h4>
-                  </div>
-                </div>
-
-                <ReviewForm
-                  initialData={review}
-                  onCancel={() => setEditingReviewId(null)}
-                  onSave={handleUpdateReview}
-                  isSubmitting={isUpdating}
-                />
-              </div>
-            );
-          }
 
           return (
             <div key={review.id} className="row align-items-center bg-light rounded shadow-sm mb-4 p-3">
@@ -122,19 +56,16 @@ function Reviews() {
                 <p className="mb-0">{review.comment}</p>
               </div>
               <div className="col-md-2 text-end">
-                <div className="d-flex justify-content-end gap-2">
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => {
-                      if (window.confirm('Hapus review ini?')) {
-                        deleteReview(review.id);
-                      }
-                    }}
-                    disabled={isUpdating}
-                  >
-                    Hapus
-                  </button>
-                </div>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => {
+                    if (window.confirm('Hapus review ini?')) {
+                      deleteReview(review.id);
+                    }
+                  }}
+                >
+                  Hapus
+                </button>
               </div>
             </div>
           );
